@@ -1,8 +1,8 @@
 from dash import Dash, html, dash_table, dcc
 import pandas as pd
 
-# Project's objective : Display a dashboard that show the progression during a Civilization 6 game from differents caracteristic.
-# to create that, I must to define some steps that give me a way to follow.
+# Project's objective : Display a dashboard that show the progression during a Civilization 6 game from differents caracteristic
+# to create that, I must to define some steps that give me a way to follow
 # I'll build several datasets
 
 # ________________________________________________________________DICTIONNARIES____________________________________________________________________________
@@ -51,6 +51,13 @@ app = Dash()
 app.layout = html.Div([
     html.Div([
         html.H1(children="Civilization 6 Dashboard")
+    ]),
+    html.Div([
+        html.H4(children="General civilization's caracteristics :"),
+        dash_table.DataTable(
+            general_df.to_dict('records'),
+            [{"name" : i, "id" : i} for i in general_df.columns]
+        ) 
     ])
 ])
 # step 4 : write the callback that I need
