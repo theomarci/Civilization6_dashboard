@@ -3,18 +3,7 @@ from dash import Dash, html, dcc, callback, State, Input, Output, ctx
 import dash_ag_grid as dag
 import pandas as pd
 
-dash.register_page(__name__)
-
-# ________________________________________________________________________DATAFRAME_________________________________________________________________________________
-
-
-genDf = pd.DataFrame()
-
-cityDf = pd.DataFrame()
-
-miliDf = pd.DataFrame()
-
-wondersDf = pd.DataFrame()
+app = Dash()
 
 # ________________________________________________________________________DEFINITION OF COLUMNS_________________________________________________________________________________
 
@@ -37,160 +26,368 @@ general_columns = [
 
                                         # ----------CITY COLUMNS----------
 cities_columns = [
-    {"field": "currentTurn"},
-    {"field": "Name"},
-    {"field": "foundationDate"},
-    {"field": "Population"},
-    {"field": "strategicRessources"},
-    {"field": "luxuryRessources"}
+    {"field": "Id", "hide": True, "cellDataType": "number"},
+    {"field": "currentTurn", "editable": True,"cellDataType": "number"},
+    {"field": "Name", "editable": True, "cellDataType": "text"},
+    {"field": "foundationDate", "editable": True, "cellDataType": "text"},
+    {"field": "Population", "editable": True, "cellDataType": "number"},
 ]
 
                                         # ----------MILITARY COLUMNS----------
 
 military_columns = [
-    {"field": "Name"},
-    {"field": "Type"},
-    {"field": "Power"}
+    {"field": "Id", "hide": True, "cellDataType": "numer"},
+    {"field": "Name", "editable": True, "cellDataType": "text"},
+    {"field": "hireDate", "editable": True, "cellDataType": "text"},
+    {"field": "Type", "editable": True, "cellDataType": "text"},
+    {"field": "Power", "editable": True, "cellDataType": "number"}
 ]
 
                                         # ----------WONDER COLUMNS----------
 
 wonder_columns = [
-    {"field": "Name"},
-    {"field": "turnNumber"},
-    {"field": "constructionDate"},
-    {"field": "type"}
+    {"field": "Id", "hide": True, "cellDataType": "number"},
+    {"field": "Name", "editable": True, "cellDataType": "text"},
+    {"field": "turnNumber", "editable": True, "cellDataType": "number"},
+    {"field": "constructionDate", "editable": True, "cellDataType": "text"},
+    {"field": "type", "editable": True, "cellDataType": "text"}
+]
+
+                                        # ----------WONDER COLUMNS----------
+
+ressources_columns = [
+    {"field": "Id", "hide": True, "cellDataType": "number"},
+    {"field": "City", "editable": True, "cellDataType": "text"},
+    {"field": "Type", "editable": True}
 ]
 
 # ________________________________________________________________________LAYOUT_________________________________________________________________________________
 
-layout = html.Div(
+app.layout = html.Div(
     [
         html.Div(
             [
-                # Data save component
+                # ----------STORE DATA----------
                 dcc.Store(
-                    id="memory_dash_AGrid_value"
+                    id="general_data_save",
+                    data=[],
+                    storage_type="session",
                 ),
-                # Title
+                dcc.Store(
+                    id="cities_data_save",
+                    data=[],
+                    storage_type="session",
+                ),
+                dcc.Store(
+                    id="military_data_save",
+                    data=[],
+                    storage_type="session",
+                ),
+                dcc.Store(
+                    id="wonder_data_save",
+                    data=[],
+                    storage_type="session",
+                ),
+                # ----------TITLE----------
+                dcc.Interval(
+                    id="interval",
+                    interval=2000,
+                ),
+                # ----------TITLE----------
                 html.H4(
                     children="The table page :"
                 ),
-                # Tables selection
+                # ----------TABLE SELECTION----------
                 dcc.Tabs(
                     id='tabs',
-                    value="general_table",
+                    value="tables",
                     children=[
-                        dcc.Tab(label="General table", value="genTable"),
-                        dcc.Tab(label="Cities table", value="cityTab"),
-                        dcc.Tab(label="military Table", value="miliTable"),
-                        dcc.Tab(label="Wonders table", value="wondersTable")
+                        # --> GENERAL TABLES TAB (the player'empire global overview)
+                        dcc.Tab(
+                                label="general_table",
+                                children=[
+                                    html.Div(
+                                        [
+                                            dag.AgGrid(
+                                            id="display_general_table",
+                                            rowData=None,
+                                            columnDefs=general_columns,
+                                            columnSize="sizeToFit",
+                                            defaultColDef={
+                                                            "editable": True,
+                                                            "wrapHeaderText": True,
+                                                            "autoHeaderHeight": True,
+                                                        },
+                                                    getRowId="params.data.currentTurn",
+                                                ),
+                                                html.Br(),
+                                                html.Button(
+                                                    id="general_button",
+                                                    children="Add row",
+                                                    n_clicks=0,
+                                                )                                           
+                                            ]
+                                        )
+                                    ]
+                                ),
+                        # --> CITIES TABLE TAB (list all player's empire cities with some details) 
+                        dcc.Tab(
+                            label="Cities table", 
+                            children=[
+                                html.Div(
+                                    [
+                                        dag.AgGrid(
+                                            id="display_cities_table",
+                                            rowData=None,
+                                            columnDefs=cities_columns,
+                                            columnSize="sizeToFit",
+                                            persistence=True,
+                                            persistence_type="session",
+                                            persisted_props=["rowData"],
+                                        ),
+                                        html.Br(),
+                                        html.Button(
+                                            id="cities_button",
+                                            children="Add new row",
+                                            n_clicks=0,
+                                        )
+                                    ]
+                                )
+                            ]
+                            ),
+                        # --> MILITARY TABLE TAB (list all units withs details possessed by a player)
+                        dcc.Tab(
+                            label="military Table", 
+                            children=[
+                                html.Div(
+                                    [
+                                        dag.AgGrid(
+                                            id="display_military_table",
+                                            rowData=None,
+                                            columnDefs=military_columns,
+                                            columnSize="sizeToFit",
+                                            defaultColDef={
+                                                "wrapHeaderText": True,
+                                                "autoHeaderHeight": True,
+                                            },
+                                            getRowId="params.data.Name",
+                                        ),
+                                        html.Br(),
+                                        html.Button(
+                                            id="military_button",
+                                            children="Add row",
+                                            n_clicks=0,
+                                        ),
+                                    ]
+                                )
+                            ]
+                            ),
+                        #  --> WONDERS TABLE TAB (list all wonders built by a player)
+                        dcc.Tab(
+                            label="Wonders table", 
+                            children=[
+                                html.Div(
+                                    [
+                                        dag.AgGrid(
+                                            id="display_wonders_table",
+                                            rowData=None,
+                                            columnDefs=wonder_columns,
+                                            columnSize="sizeToFit",
+                                            defaultColDef={
+                                                "editable": True,
+                                                "wrapHeaderText": True,
+                                                "autoHeaderHeight": True,
+                                            },
+                                            getRowId="params.data.Name"
+                                        ),
+                                        html.Br(),
+                                        html.Button(
+                                            id="wonder_button",
+                                            children="Add row",
+                                            n_clicks=0,
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
                     ]
                 ),
             ]
         ),
         html.Br(),
-        # Display table
+        # ----------DISPLAY TABLE----------
         html.Div(
             id="display_table"
             ),
+        # ----------TEST DATA----------
+        html.Div(id="output"),
     ]
 )
 
 
 # ________________________________________________________________________CALLBACK_________________________________________________________________________________
 
-                                        # ----------TAB COMPONENT----------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+                                                            # __________GENERAL TABLE__________
+
+# ---------GENERAL OUTPUT CALLBACK----------
 @callback(
-    Output("display_table", "children"),
-    Input("tabs", "value"),
+        Output("display_general_table", "rowData"),
+        Input("general_button", "n_clicks"),
+        State("general_data_save", "data"),
+        State("display_general_table", "rowData")
 )
-def display_table(value):
-    if value == "genTable" :
-        return  dag.AgGrid(
-                id="display_general_table",
-                rowData=genDf.to_dict("records"),
-                columnDefs=general_columns,
-                columnSize="sizeToFit",
-                defaultColDef={
-                                    "editable": True,
-                                    "wrapHeaderText": True,
-                                    "autoHeaderHeight": True,
-                                },
-                getRowId="params.data.currentTurn",
-            ),
-    elif value == "cityTab" :
-        return html.Div(
-            [
-                dag.AgGrid(
-                id="display_cities_table",
-                rowData=cityDf.to_dict("records"),
-                columnDefs=cities_columns,
-                columnSize="sizeToFit",
-                defaultColDef={
-                    "editable": True,
-                    "wrapHeaderText": True,
-                    "autoHeaderHeight": True,
-                },
-                getRowId="params.data.currentTurn",
-                persistence=True,
-                persistence_type="session",
-            ),
-            html.Br(),
-            # Add rows button
-            html.Button(
-                    id="add_row_button",
-                    children="Add row",
-                    n_clicks=0,
-                ),
-            ]
-        ),
-    elif value == "miliTable" :
-        return dag.AgGrid(
-            id="display_military_table",
-            rowData=miliDf.to_dict("records"),
-            columnDefs=military_columns,
-            columnSize="sizeToFit",
-            defaultColDef={
-                "editable": True,
-                "wrapHeaderText": True,
-                "autoHeaderHeight": True,
-            },
-            getRowId="params.data.Name",
-        ),
-    elif value == "wondersTable" :
-        return dag.AgGrid(
-            id="display_wonders_table",
-            rowData=wondersDf.to_dict("records"),
-            columnDefs=wonder_columns,
-            columnSize="sizeToFit",
-            defaultColDef={
-                "editable": True,
-                "wrapHeaderText": True,
-                "autoHeaderHeight": True,
-            },
-            getRowId="params.data.Name"
-        ),
+def generalOutput(clicks, data, rowData):
+    # --> LOAD DATA : loading data from the session storage
+    if ctx.triggered_id == None :
+        return data
+    # --> ADD NEW ROW : button that create on the grid a new row 
+    elif ctx.triggered_id == "general_button":
+        newRow = {
+            "currentTurn": len(rowData)+1,
+            "currentDate": None,
+            "currentMoney": None,
+            "income/Turn": None,
+            "currentFaith": None,
+            "faith/Turn": None,
+            "science/Turn": None,
+            "culture/Turn": None,
+            "numberOfCity": None,
+            "populationTotal": None,
+            "renownedPerson": None,
+            "numberOfWonder": None,
+            "militaryPower": None,
+        }
+        updateRow = rowData + [newRow]
+        return updateRow
+    
+# ---------GENERAL UPDATE DATA CALLBACK----------
+ # --> Update data add in the grid to the session storage 
+@callback(
+        Output("general_data_save", "data"),
+        Input("interval", "n_intervals"),
+        State("display_general_table", "rowData"),
+        prevent_initial_call=True,
+)
+def generalUpdate(interval, data):
+    return data
 
-                                        # ----------ADD ROW BUTTON----------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+                                                             # __________CITIES TABLE__________
+
+# ---------CTIES OUTPUT CALLBACK----------
 @callback(
     Output("display_cities_table", "rowData"),
-    Input("add_row_button", "n_clicks"),
+    Input("cities_button", "n_clicks"),
+    State("display_cities_table", "rowData"),
+    State("cities_data_save", "data"),
+)
+def citiesOutput(clicks, rowData, data) :
+    # --> LOAD DATA : loading data from the session storage
+    if ctx.triggered_id == None :
+        return data
+    # --> ADD NEW ROW : button that create on the grid a new row 
+    elif ctx.triggered_id == "cities_button":
+        newRow = {
+            "Id": len(rowData)+1,
+            "currentTurn": None,
+            "Name": None,
+            "foundationDate": None,
+            "Population": None
+        }
+        updatedRow = rowData + [newRow]
+        return updatedRow
+    
+# ---------CTIES UPDATE DATA CALLBACK----------
+ # --> Update data add in the grid to the session storage 
+@callback(
+    Output("cities_data_save", "data"),
+    Input("interval", "n_intervals"),
     State("display_cities_table", "rowData"),
     prevent_initial_call=True,
 )
-def add_city_row(add, data) :
-    if data is None :
-        data=[]
-    new_row = {
-        "currentTurn": len(data)+1,
-        "Name": "0",
-        "foundationDate": "0",
-        "Population": 0,
-        "strategicRessources": "0",
-        "luxuryRessources": "0",
-    }
-    updated_data = data + [new_row]
-    return updated_data
+def citiesUpdate(intervals, data):
+    return data
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+                                                            # __________MILITARY TABLE__________
+
+# ---------MILITARY OUTPUT CALLBACK----------
+@callback(
+    Output("display_military_table", "rowData"),
+    Input("military_button", "n_clicks"),
+    State("military_data_save", "data"),
+    State("display_military_table", "rowData"),
+)
+def militaryOutput(clicks, data, rowData):
+    # --> LOAD DATA : loading data from the session storage
+    if ctx.triggered_id == None:
+        return data
+    # --> ADD NEW ROW : button that create on the grid a new row 
+    elif ctx.triggered_id == "military_button":
+        newRow = {
+            "Id": len(rowData) + 1,
+            "Name": None,
+            "hireDate": None,
+            "Type": None,
+            "Power": None
+        }
+        updateRow = rowData + [newRow]
+        return updateRow
+    
+ # ---------MILITARY UPDATE DATA CALLBACK----------   
+  # --> Update data add in the grid to the session storage 
+@callback(
+    Output("military_data_save", "data"),
+    Input("interval", "n_intervals"),
+    State("display_military_table", "rowData"),
+    prevent_initial_call=True,
+)
+def militaryUpdate(interval, data):
+    return data
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+                                                            # __________WONDER TABLE__________
+
+# ---------WONDER OUTPUT CALLBACK----------
+@callback(
+    Output("display_wonders_table", "rowData"),
+    Input("wonder_button", "n_clicks"),
+    State("wonder_data_save", "data"),
+    State("display_wonders_table", "rowData"),
+)
+def wonderOutput(clicks, data, rowData):
+    # --> LOAD DATA : loading data from the session storage
+    if ctx.triggered_id == None :
+        return data
+    # --> ADD NEW ROW : button that create on the grid a new row 
+    elif ctx.triggered_id == "wonder_button":
+        newRow = {
+            "Id": len(rowData) + 1,
+            "Name": None,
+            "turnNumber": None,
+            "constructionDate": None,
+            "type": None
+        }
+        updateRow = rowData + [newRow]
+        return updateRow
+    
+ # ---------WONDER UPDATE DATA CALLBACK---------- 
+ # --> Update data add in the grid to the session storage 
+@callback(
+    Output("wonder_data_save", "data"),
+    Input("interval", "n_intervals"),
+    State("display_wonders_table", "rowData"),
+    prevent_initial_call=True,
+)
+def wonderUpdate(interval, data):
+    return data
+
+# ________________________________________________________________________RUN APP_________________________________________________________________________________
+
+if __name__ == "__main__" :
+    app.run(debug=True)

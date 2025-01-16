@@ -3,7 +3,7 @@ from dash import Dash, html, dcc, callback, State, Input, Output, ctx
 import dash_ag_grid as dag
 import pandas as pd
 
-app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
+app = Dash(__name__, use_pages=True)
 
 # ________________________________________________________________________LAYOUT_________________________________________________________________________________
 
