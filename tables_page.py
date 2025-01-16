@@ -58,7 +58,8 @@ wonder_columns = [
 ressources_columns = [
     {"field": "Id", "hide": True, "cellDataType": "number"},
     {"field": "City", "editable": True, "cellDataType": "text"},
-    {"field": "Type", "editable": True}
+    {"field": "Type", "editable": True},
+    {"field": "total", "editable": True}
 ]
 
 # ________________________________________________________________________LAYOUT_________________________________________________________________________________
@@ -88,6 +89,11 @@ app.layout = html.Div(
                     data=[],
                     storage_type="session",
                 ),
+                dcc.Store(
+                    id="ressource_data_save",
+                    data=[],
+                    storage_type="session"
+                ),
                 # ----------TITLE----------
                 dcc.Interval(
                     id="interval",
@@ -109,23 +115,22 @@ app.layout = html.Div(
                                     html.Div(
                                         [
                                             dag.AgGrid(
-                                            id="display_general_table",
-                                            rowData=None,
-                                            columnDefs=general_columns,
-                                            columnSize="sizeToFit",
-                                            defaultColDef={
-                                                            "editable": True,
-                                                            "wrapHeaderText": True,
-                                                            "autoHeaderHeight": True,
-                                                        },
-                                                    getRowId="params.data.currentTurn",
-                                                ),
-                                                html.Br(),
-                                                html.Button(
-                                                    id="general_button",
-                                                    children="Add row",
-                                                    n_clicks=0,
-                                                )                                           
+                                                id="display_general_table",
+                                                rowData=None,
+                                                columnDefs=general_columns,
+                                                columnSize="sizeToFit",
+                                                defaultColDef={
+                                                                "wrapHeaderText": True,
+                                                                "autoHeaderHeight": True,
+                                                            },
+                                                getRowId="params.data.currentTurn",
+                                            ),
+                                            html.Br(),
+                                            html.Button(
+                                                id="general_button",
+                                                children="Add row",
+                                                n_clicks=0,
+                                            )                                           
                                             ]
                                         )
                                     ]
@@ -141,9 +146,6 @@ app.layout = html.Div(
                                             rowData=None,
                                             columnDefs=cities_columns,
                                             columnSize="sizeToFit",
-                                            persistence=True,
-                                            persistence_type="session",
-                                            persisted_props=["rowData"],
                                         ),
                                         html.Br(),
                                         html.Button(
@@ -154,7 +156,7 @@ app.layout = html.Div(
                                     ]
                                 )
                             ]
-                            ),
+                        ),
                         # --> MILITARY TABLE TAB (list all units withs details possessed by a player)
                         dcc.Tab(
                             label="military Table", 
@@ -181,7 +183,7 @@ app.layout = html.Div(
                                     ]
                                 )
                             ]
-                            ),
+                        ),
                         #  --> WONDERS TABLE TAB (list all wonders built by a player)
                         dcc.Tab(
                             label="Wonders table", 
@@ -193,16 +195,32 @@ app.layout = html.Div(
                                             rowData=None,
                                             columnDefs=wonder_columns,
                                             columnSize="sizeToFit",
-                                            defaultColDef={
-                                                "editable": True,
-                                                "wrapHeaderText": True,
-                                                "autoHeaderHeight": True,
-                                            },
                                             getRowId="params.data.Name"
                                         ),
                                         html.Br(),
                                         html.Button(
                                             id="wonder_button",
+                                            children="Add row",
+                                            n_clicks=0,
+                                        )
+                                    ]
+                                )
+                            ]
+                        ),
+                        dcc.Tab(
+                            label="Ressources table",
+                            children=[
+                                html.Div(
+                                    [
+                                        dag.AgGrid(
+                                            id="display_ressources_table",
+                                            rowData=None,
+                                            columnDefs=ressources_columns,
+                                            columnSize="sizeToFit",
+                                        ),
+                                        html.Br(),
+                                        html.Button(
+                                            id="ressource_button",
                                             children="Add row",
                                             n_clicks=0,
                                         )
@@ -385,7 +403,43 @@ def wonderOutput(clicks, data, rowData):
     prevent_initial_call=True,
 )
 def wonderUpdate(interval, data):
-    print("Hello World !")
+    return data
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+                                                                # __________RESSOURCE TABLE__________
+
+# ---------RESSOURCE UPDATE DATA CALLBACK---------- 
+@callback(
+    Output("display_ressources_table", "rowData"),
+    Input("ressource_button", "n_clicks"),
+    State("ressource_data_save", "data"),
+    State("display_ressources_table", "rowData")
+)
+def ressourceOutput(clicks, data, rowData):
+    # --> LOAD DATA : loading data from the session storage
+    if ctx.triggered_id == None :
+        return data
+    # --> ADD NEW ROW : button that create on the grid a new row 
+    elif ctx.triggered_id == "ressource_button" :
+        newRow = {
+            "Id": len(rowData) + 1,
+            "City": None,
+            "Type": None,
+            "total": None
+        }
+        updateRow = rowData + [newRow]
+        return updateRow
+    
+# ---------RESSOURCE UPDATE DATA CALLBACK---------- 
+# --> Update data add in the grid to the session storage 
+@callback(
+    Output("ressource_data_save", "data"),
+    Input("interval", "n_intervals"),
+    State("display_ressources_table", "rowData"),
+    prevent_initial_call=True
+ )
+def ressourceUpdate(intervals, data):
     return data
 
 # ________________________________________________________________________RUN APP_________________________________________________________________________________
