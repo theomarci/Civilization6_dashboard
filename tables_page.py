@@ -385,6 +385,7 @@ def wonderOutput(clicks, data, rowData):
     prevent_initial_call=True,
 )
 def wonderUpdate(interval, data):
+    print("Hello World !")
     return data
 
 # ________________________________________________________________________RUN APP_________________________________________________________________________________
